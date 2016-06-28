@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System;
 using LitJson;
 
+
+
 public class DataLoader : MonoBehaviour
 {
     #region Public and Protected Members
@@ -11,23 +13,20 @@ public class DataLoader : MonoBehaviour
     public string m_password;
     public string m_spreadSheetName = "_summary";
     public string m_action = "GetData";
-    
-    
+
+    public Dictionary<string, Dictionary<int, JsonData>> m_dataBase = new Dictionary<string, Dictionary<int, JsonData>>();
+
+    public delegate void DBDownloadDataEventHandler(Dictionary<string, Dictionary<int, JsonData>> _dictionary);
+    public event DBDownloadDataEventHandler DBOnDownloadDataEvent;
+
     #endregion
     // Use this for initialization
     void Start()
     {
-
-        m_finalURL = CreateURL(m_spreadSheetName);
-        StartCoroutine( InitialWWWRequest(m_finalURL ));
+        DownloadData();        
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-       
-        
-    }
+    
     private string CreateURL(string _sheetName)
     {
         string baseURL = "https://script.google.com/macros/s/AKfycbw9HGdA7fgjTaiBzqmYBI2195PAJCcfQhdoPR5dtcQ7epdU_IM/exec?";
@@ -103,18 +102,22 @@ public class DataLoader : MonoBehaviour
 
         isDownloadDone = true;
         StopAllCoroutines();
-        for( var i = 0; i < m_dataBase[ "BESTIAIRE" ].Count; i++ )
-        {
-            Beast myBeast = Beast.CreateFromJSON(m_dataBase["BESTIAIRE"][ i ].ToJson());
-            print( "New beast: " + myBeast.Name + " - HP: " + myBeast.HP );
-        }        
+        DBOnDownloadDataEvent(m_dataBase);
+            
+    }
+
+    public void DownloadData()
+    {
+        m_finalURL = CreateURL(m_spreadSheetName);
+        m_dataBase = new Dictionary<string, Dictionary<int, JsonData>>();
+        StartCoroutine(InitialWWWRequest(m_finalURL));
     }
 
     #region Private Members
 
     private string m_finalURL;
     private WWW www;
-    private Dictionary<string,Dictionary<int,JsonData>> m_dataBase = new Dictionary<string,Dictionary<int,JsonData>>();
+    
     private bool isDownloadDone = false;
 
     #endregion
@@ -132,4 +135,5 @@ public class DataLoader : MonoBehaviour
         }
         
     }
+   
 }
